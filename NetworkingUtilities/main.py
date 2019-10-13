@@ -50,8 +50,8 @@ def getAddresses():
 def index():
     return render_template('index.html')
 
-@app.route('/getAddresses', methods=['GET', 'POST'])
-def addresses():
+@app.route('/networkScanner', methods=['GET', 'POST'])
+def networkScanner():
     if request.method == 'POST':
         json_string = json.dumps(getAddresses(), ensure_ascii = False)
         response = Response(json_string,content_type="application/json; charset=utf-8" )

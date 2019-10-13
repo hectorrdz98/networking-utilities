@@ -85,7 +85,7 @@ $("#reloadBtn").click(function () {
     $("#reloadBtn").addClass("is-loading");
 
     $.ajax({
-        url: "/getAddresses",
+        url: "/networkScanner",
         type: "POST",
         contentType: false,
         cache: false,
