@@ -1,0 +1,18 @@
+--- Final results ---
+Available: 13
+Unavailable: 242
+---------------------
+
+172.16.8.1 00:50:56:81:1b:a9 VMware, Inc.
+172.16.8.96 6c:62:6d:9d:a2:06 Micro-Star INT'L CO., LTD
+172.16.8.112 00:09:0f:95:0f:e4 Fortinet Inc.
+172.16.8.116 e8:1c:ba:42:67:b0 Fortinet, Inc.
+172.16.8.124 f4:8e:38:b4:5c:6d Dell Inc.
+172.16.8.134 64:70:02:7e:32:f3 TP-LINK TECHNOLOGIES CO.,LTD.
+172.16.8.141 08:5b:0e:8e:79:50 Fortinet, Inc.
+172.16.8.143 08:9e:01:8b:dd:22 QUANTA COMPUTER INC.
+172.16.8.153 00:21:85:0b:89:9c MICRO-STAR INT'L CO.,LTD.
+172.16.8.167 00:50:56:81:0f:ee VMware, Inc.
+172.16.8.170 ec:8e:b5:d9:02:4c Hewlett Packard
+172.16.8.189 00:0e:c6:cf:88:61 ASIX ELECTRONICS CORP.
+172.16.8.204 00:1d:92:f4:a6:d0 MICRO-STAR INT'L CO.,LTD.

@@ -1,0 +1,55 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+#particles-js {
+    background-image: linear-gradient(to right, #2F2441, #35286D);
+}
+.particles-js-canvas-el {
+    position: absolute;
+}
+
+#particles-js #mainTitle, #author {
+    color: white;
+}
+#mainTitle {
+    font-size: 4rem;
+}
+#author {
+    font-size: 1.5rem;
+}
+
+#arrow-container {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    width: 100%;
+    height: 100%;
+}
+#arrow-div {
+    background-color: white;
+    border-radius: 2px 2px 0px 0px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: 0.2s all;
+}
+#arrow-div i {
+    font-size: 20px;
+    transition: 0.5s all;
+}
+
+#arrow-div:hover {
+    height: 50px;
+    width: 50px;
+}
+
+#arrow-div:hover i {
+    color: black;
+}

@@ -1,12 +1,22 @@
 from scapy.all import *
+import sqlite3
+from sqlite3 import Error
+
+conn = sqlite3.connect('ieee.db')
+c = conn.cursor()
+
+def get_organization(mac):
+    c.execute("SELECT * FROM ieee WHERE mac=?", (mac,))
+    conn.commit()
+    return c.fetchone()
 
 TIMEOUT = 2
 
 available = []
 unavailable = []
 
-for n in range(1, 255):
-    packet = IP(src="172.16.26.75", dst="172.16.26.{}".format(n))/ICMP()/"hi"
+for n in range(1, 256):
+    packet = IP(src="172.16.9.216", dst="172.16.8.{}".format(n))/ICMP()/"hi"
     reply = sr1(packet, inter=0.5, timeout=1)
     if not (reply is None):
         print(reply.src, "is online")
@@ -28,4 +38,7 @@ print('Unavailable: {}'.format(len(unavailable)))
 print('---------------------')
 print()
 for ava in available:
-    print('{} -> {}'.format(ava[0], ava[1]))
+    fixedMAC = '-'.join(ava[1].split(':')[0:3]).upper() if ava[1] else None
+    organization = get_organization(fixedMAC)[1] if fixedMAC else ''
+    print('{} {} {}'.format(ava[0], ava[1], organization))
+    

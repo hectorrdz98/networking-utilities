@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" style="overflow-y: auto;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='resources/img/icono_opt.jpg') }}">
+
+    <title>Networking Utilities</title>
+
+    <link href="{{ url_for('static', filename='resources/font-awesome/css/all.css') }}" rel="stylesheet"> <!--load all styles -->
+    <link href="{{ url_for('static', filename='css/bulma.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/app.css') }}" rel="stylesheet">
+
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+</head>
+<body>
+    <nav class="navbar" role="navigation" aria-label="main navigation" style="background-color: #2F2441">
+        <div class="navbar-brand">
+            <a class="navbar-item" href="/">
+                <img style="width: auto; max-height: 2.75rem;" 
+                    src="{{ url_for('static', filename='resources/img/icono_opt.jpg') }}" alt="Logo" 
+                    width="112" height="28">
+            </a>
+            <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </a>
+            <div id="navbarBasicExample" class="navbar-menu">
+                <div class="navbar-start">
+                    <a href="/" class="navbar-item" style="font-size: 1.3rem; text-transform: uppercase;
+                        font-weight: 500; padding-left: 0px; color: white;">
+                        Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <section id="mainSection" class="hero">
+        <div class="hero-body">
+            <div class="container">
+                <h1 class="title">
+                    List of all devices connected to LAN
+                </h1>
+                <h2 class="subtitle">
+                    Click one to see details
+                </h2>
+                <div style="margin: 20px 0px;">
+                    <a id="reloadBtn" class="button">Reload</a>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>IP</th>
+                            <th>MAC</th>
+                            <th>Enterprise</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ipContainer">
+                        {% for data in datas %}
+                        <tr>
+                            <th>{{ loop.index }}</th>
+                            <th></th>
+                            <td>{{ data['ip'] }}</td>
+                            <td>{{ data['mac'] }}</td>
+                            <td>{{ data['enterprise'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</body>
+
+<!-- scripts -->
+<script src="{{ url_for('static', filename='js/particles.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script>
+
+$("#reloadBtn").click(function () {
+    $("#reloadBtn").addClass("is-loading");
+
+    $.ajax({
+        url: "/getAddresses",
+        type: "POST",
+        contentType: false,
+        cache: false,
+        processData: false,
+        success: function (datas) {
+            loadData(datas);
+            $("#reloadBtn").removeClass("is-loading");
+        }
+    });
+});
+
+function loadData(datas) {
+    var format = ``;
+
+    datas.forEach((data, i) => {
+        format += `
+            <tr>
+                <th>` + (i+1) + `</th>
+                <th></th>
+                <td>` + data['ip'] + `</td>
+                <td>` + data['mac'] + `</td>
+                <td>` + data['enterprise'] + `</td>
+            </tr>
+        `;
+    });
+    $("#ipContainer").empty();
+    $("#ipContainer").append(format);
+}
+
+</script>
+
+</html>
