@@ -58,7 +58,7 @@ def networkScanner():
         return response
     else:
         datas = getAddresses()
-        return render_template('addressesList.html', datas=datas)
+        return render_template('addressesList.html', datas=datas, ip=get_ip())
 
 if __name__ == "__main__":
     app.run(host='localhost', port=7711, debug=True)
