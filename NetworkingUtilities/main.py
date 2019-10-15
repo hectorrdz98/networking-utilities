@@ -12,7 +12,6 @@ app = Flask(__name__)
 def get_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        # doesn't even have to be reachable
         s.connect(('10.255.255.255', 1))
         IP = s.getsockname()[0]
     except:
@@ -29,10 +28,11 @@ def get_organization(mac):
         return c.fetchone()
 
 def scan(ip):
-    arp_request = scapy.ARP(pdst=ip)
-    broadcast = scapy.Ether(dst='ff:ff:ff:ff:ff:ff')
-    arp_request_broadcast = broadcast/arp_request
-    answered_list = scapy.srp(arp_request_broadcast, timeout=1,
+    #arp_request = scapy.ARP(pdst=ip)
+    #broadcast = scapy.Ether(dst='ff:ff:ff:ff:ff:ff')
+    #arp_request_broadcast = broadcast/arp_request
+    #answered_list = scapy.srp(arp_request_broadcast, timeout=1,
+    answered_list = scapy.arping(ip, timeout=1,
                               verbose=False)[0]
     clients_list = []
     for element in answered_list:
