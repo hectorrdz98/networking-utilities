@@ -82,9 +82,23 @@ $("#getInfo-btn").click(function () {
         if (i < ipParts.length-1) binaryIp += ".";
     }
 
+    if (subnet[0] != "/") subnet = getSubnetFormatted(subnet);
+
     var subnetData = getSubnet(subnet);
     var subnetFormated = subnetData[0];
     var binarySubnet = subnetData[1];
+
+    var network = getNetwork(ip, subnetFormated);
+    var binaryNetwork = "";
+    var networkParts = network.split(".");
+    for (var i = 0; i<networkParts.length; i++) {
+        binaryNetwork += getBinary(parseInt(networkParts[i]));
+        if (i < networkParts.length-1) binaryNetwork += ".";
+    }
+
+    var broadcastData = getBroadcast(binaryNetwork, binarySubnet);
+    var broadcast = broadcastData[0];
+    var binaryBroadcast = broadcastData[1];
 
     var data = `
     <section class="hero is-light" style="margin: 20px;">
@@ -96,8 +110,30 @@ $("#getInfo-btn").click(function () {
                 <h2 class="subtitle">
                     ` + subnetFormated + `
                 </h2>
-                <div><span class="info-network">Binary ip:</span><span>` + binaryIp + `</span></div>
-                <div><span class="info-network">Binary subnet:</span><span>` + binarySubnet + `</span></div>
+                <div>
+                    <span class="info-network">Network address:</span>
+                    <span>` + network + `</span>
+                </div>
+                <div>
+                    <span class="info-network">Broadcast address:</span>
+                    <span>` + broadcast + `</span>
+                </div>
+                <div style="margin-top: 12px;">
+                    <span class="info-network">Binary ip:</span>
+                    <span>` + binaryIp + `</span>
+                </div>
+                <div>
+                    <span class="info-network">Binary subnet:</span>
+                    <span>` + binarySubnet + `</span>
+                </div>
+                <div>
+                    <span class="info-network">Binary network:</span>
+                    <span>` + binaryNetwork + `</span>
+                </div>
+                <div>
+                    <span class="info-network">Binary broadcast:</span>
+                    <span>` + binaryBroadcast + `</span>
+                </div>
             </div>
         </div>
     </section>
@@ -125,8 +161,21 @@ function getDec(binary) {
     return dec;
 }
 
+function getSubnetFormatted(subnet) {
+    var subnetParts = subnet.split(".");
+    var binarySubnet = "";
+    for (var i = 0; i<subnetParts.length; i++) {
+        binarySubnet += getBinary(parseInt(subnetParts[i]));
+        if (i < subnetParts.length-1) binarySubnet += ".";
+    }
+    var cont = 0;
+    for (var i = 0; i<binarySubnet.length; i++) {
+        if (binarySubnet[i] == "1") cont++;
+    }
+    return "/" + cont;
+}
+
 function getSubnet(subnetStr) {
-    if (subnetStr[0] != "/") return subnetStr;
     var preSub = parseInt(subnetStr.slice(1, subnetStr.length));
 
     var subnet = "";
@@ -151,6 +200,27 @@ function getSubnet(subnetStr) {
     }
 
     return [getDec(subnet), subnet];
+}
+
+function getNetwork(ip, subnet) {
+    var partsIp = ip.split(".");
+    var partsSubnet = subnet.split(".");
+    var network = "";
+    for (var i = 0; i < partsIp.length; i++) {
+        network += parseInt(partsIp[i]) & parseInt(partsSubnet[i]);
+        if (i < partsIp.length - 1) network += ".";
+    }
+    return network;
+}
+
+function getBroadcast(bN, bS) {
+    var broadcast = "";
+    for (var i = 0; i < bS.length; i++) {
+        if (bS[i] == ".") broadcast += ".";
+        else if (bS[i] == "1") broadcast += bN[i];
+        else broadcast += "1";
+    }
+    return [getDec(broadcast), broadcast];
 }
 
 </script>
