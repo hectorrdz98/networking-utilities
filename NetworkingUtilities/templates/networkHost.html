@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='resources/img/icono_opt.jpg') }}">
+
+    <title>Networking Utilities</title>
+
+    <link href="{{ url_for('static', filename='resources/font-awesome/css/all.css') }}" rel="stylesheet"> <!--load all styles -->
+    <link href="{{ url_for('static', filename='css/bulma.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/app.css') }}" rel="stylesheet">
+
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+</head>
+<body>
+    <nav class="navbar" role="navigation" aria-label="main navigation" style="background-color: #2F2441">
+        <div class="navbar-brand">
+            <a class="navbar-item" href="/">
+                <img style="width: auto; max-height: 2.75rem;" 
+                    src="{{ url_for('static', filename='resources/img/icono_opt.jpg') }}" alt="Logo" 
+                    width="112" height="28">
+            </a>
+            <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </a>
+            <div id="navbarBasicExample" class="navbar-menu">
+                <div class="navbar-start">
+                    <a href="/" class="navbar-item" style="font-size: 1.3rem; text-transform: uppercase;
+                        font-weight: 500; padding-left: 0px; color: white;">
+                        Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <section id="mainSection" class="hero">
+        <div class="hero-body">
+            <div class="container">
+                <h1 class="title">
+                    Network - Host utility
+                </h1>
+                <h2 class="subtitle">
+                    Get information about the Network/Host
+                </h2>
+                <div class="field is-grouped">
+                    <div class="field" style="margin-right: 25px;">
+                        <label class="label">IPv4 Address</label>
+                        <div class="control">
+                            <input id="ip-input" class="input" type="text" placeholder="192.168.0.1" value="192.168.10.10">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="label">Subnet mask</label>
+                        <div class="control">
+                            <input id="subnet-input" class="input" type="text" placeholder="255.255.255.0 or /24" value="/24">
+                        </div>
+                    </div>
+                </div>
+                <a id="getInfo-btn" class="button is-dark">Get info</a>
+            </div>
+        </div>
+    </section>
+    <div id="info-div"></div>
+</body>
+<script>
+
+var infoDiv = $("#info-div");
+
+$("#getInfo-btn").click(function () {
+    var ip = $("#ip-input").val();
+    var subnet = $("#subnet-input").val();
+
+    var ipParts = ip.split(".");
+    var binaryIp = "";
+
+    for (var i = 0; i<ipParts.length; i++) {
+        binaryIp += getBinary(parseInt(ipParts[i]));
+        if (i < ipParts.length-1) binaryIp += ".";
+    }
+
+    var subnetData = getSubnet(subnet);
+    var subnetFormated = subnetData[0];
+    var binarySubnet = subnetData[1];
+
+    var data = `
+    <section class="hero is-light" style="margin: 20px;">
+        <div class="hero-body" style="padding: 1.5rem;">
+            <div class="container">
+                <h1 class="title">
+                    ` + ip + subnet + `
+                </h1>
+                <h2 class="subtitle">
+                    ` + subnetFormated + `
+                </h2>
+                <div><span class="info-network">Binary ip:</span><span>` + binaryIp + `</span></div>
+                <div><span class="info-network">Binary subnet:</span><span>` + binarySubnet + `</span></div>
+            </div>
+        </div>
+    </section>
+    `;
+
+    infoDiv.prepend(data);
+});
+
+function getBinary(n) {
+    var preN = n.toString(2);
+    var res = "";
+    for (var i = 0; i < 8-preN.length; i++) res += "0";
+    res += preN;
+    return res;
+}
+
+function getDec(binary) {
+    var dec = "";
+    var cont = 0;
+    binary.split(".").forEach(bin => {
+        dec += parseInt(bin, 2);
+        cont++;
+        if (cont < 4) dec += ".";
+    });
+    return dec;
+}
+
+function getSubnet(subnetStr) {
+    if (subnetStr[0] != "/") return subnetStr;
+    var preSub = parseInt(subnetStr.slice(1, subnetStr.length));
+
+    var subnet = "";
+    var cont = 0;
+
+    for (var i = 0; i<preSub; i++) {
+        subnet += "1";
+        cont++;
+        if (cont == 8 && i < 32-1) {
+            cont = 0;
+            subnet += ".";
+        }
+    }
+
+    for (var i = preSub; i<32; i++) {
+        subnet += "0";
+        cont++;
+        if (cont == 8 && i < 32-1) {
+            cont = 0;
+            subnet += ".";
+        }
+    }
+
+    return [getDec(subnet), subnet];
+}
+
+</script>
+</html>

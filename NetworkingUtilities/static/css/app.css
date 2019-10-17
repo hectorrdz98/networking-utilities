@@ -53,3 +53,13 @@
 #arrow-div:hover i {
     color: black;
 }
+
+.message {
+    margin: 0px 10px;
+}
+
+span.info-network {
+    display: inline-block;
+    width: 150px;
+    font-weight: 500;
+}

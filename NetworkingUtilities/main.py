@@ -60,5 +60,13 @@ def networkScanner():
         datas = getAddresses()
         return render_template('addressesList.html', datas=datas, ip=get_ip())
 
+@app.route('/networkHost', methods=['GET', 'POST'])
+def networkHost():
+    if request.method == 'POST':
+        pass
+    else:
+        ip = get_ip()
+        return render_template('networkHost.html', ip=ip)
+
 if __name__ == "__main__":
     app.run(host='localhost', port=7711, debug=True)
