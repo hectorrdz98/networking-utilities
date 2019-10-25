@@ -58,7 +58,9 @@
         flex-wrap: wrap;
     }
     .device-icon {
+        cursor: pointer;
         height: 40px;
+        filter: opacity(0.5);
     }
     #diagram-properties {
         width: 150px;
@@ -187,7 +189,9 @@
                             <h2 class="subtitle" style="margin-bottom: 10px;">
                                 Intermediary Devices
                             </h2>
-                            <div id="intermediary-container" class="device-container"></div>
+                            <div id="intermediary-container" class="device-container">
+                                <img class="device-icon" id="router" src="{{ url_for('static', filename='resources/img/router.png') }}">
+                            </div>
                         </div>
                     </section>
                 </div>
@@ -214,6 +218,7 @@ var cPlus = $("#c-plus");
 var cEraser = $("#c-eraser");
 var menuActive = false;
 var cursorType = "default";
+var deviceSelected = "";
 
 $("#openDiagram-btn").click(function () {
     var ip = $("#ip-input").val();
@@ -246,6 +251,17 @@ $(".mouse-container").click(function () {
     }
 });
 
+$(".device-icon").click(function () {
+    var id = $(this).attr("id");
+    deviceSelected = id;
+    $(".device-icon").each(function () {
+        if ($(this).attr("id") == id)
+            $(this).css("filter", "opacity(1)");
+        else
+            $(this).css("filter", "opacity(0.5)");
+    });
+});
+
 $("#diagram-show-menu").click(function () {
     if ($("#diagram-menu").css("transform") == "matrix(1, 0, 0, 1, -350, 0)") {
         $("#diagram-menu").css("transform", "translateX(0px)");
@@ -273,7 +289,14 @@ class Device {
     }
 
     clicked() {
-        
+        if (mouseX >= this.fixedPosition[0] && mouseX <= this.fixedPosition[0] + this.size[0] &&
+            mouseY >= this.fixedPosition[1] && mouseY <= this.fixedPosition[1] + this.size[1])
+            if (cursorType == "erase") {
+                var index = devices.indexOf(this);
+                if (index > -1) {
+                    devices.splice(index, 1);
+                }
+            }
     }
 }
 
@@ -301,9 +324,6 @@ function setCursor() {
 
 function loadDeviceIcons() {
     deviceIcons['router'] = loadImage("{{ url_for('static', filename='resources/img/router.png') }}");
-    $("#intermediary-container").append(`
-        <img class="device-icon" src="{{ url_for('static', filename='resources/img/router.png') }}">
-    `);
 }
 
 function drawDevices() {
@@ -321,10 +341,12 @@ function drawDevices() {
 
 function mouseClicked() {
     if (menuActive) {
-        if (mouseX > 400) {
-            if (cursorType == "plus")
-                devices.push(new Device("R" + (devices.length-1), "router", deviceIcons['router'], 
+        if (mouseX > 400 && (mouseX < 1130 || mouseY < 550)) {
+            if (cursorType == "plus" && deviceSelected != "") {
+                var name = getNextName("R");
+                devices.push(new Device(name, "router", deviceIcons[deviceSelected], 
                     [mouseX, mouseY], [mouseX-33, mouseY-24], [66, 48]));
+            }
             else {
                 devices.forEach(device => {
                     device.clicked();
@@ -332,10 +354,12 @@ function mouseClicked() {
             }
         }
     } else {
-        if (mouseX > 50) {
-            if (cursorType == "plus")
-                devices.push(new Device("R" + (devices.length-1), "router", deviceIcons['router'], 
+        if (mouseX > 50 && (mouseX < 1130 || mouseY < 550)) {
+            if (cursorType == "plus"  && deviceSelected != "") {
+                var name = getNextName("R");
+                devices.push(new Device(name, "router", deviceIcons[deviceSelected], 
                     [mouseX, mouseY], [mouseX-33, mouseY-24], [66, 48]));
+            } 
             else {
                 devices.forEach(device => {
                     device.clicked();
@@ -343,6 +367,24 @@ function mouseClicked() {
             }
         }
     }
+}
+
+function getNextName(prefix) {
+    var index = 0;
+    while (true) {
+        var match = false;
+
+        for (let i = 0; i < devices.length; i++) {
+            if (devices[i].name == prefix+index) {
+                match = true;
+                break;
+            }
+        }
+        
+        if (!match) return prefix + index;
+        index++;
+    }
+    
 }
 
 </script>
