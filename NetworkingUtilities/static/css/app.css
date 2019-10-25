@@ -63,3 +63,22 @@ span.info-network {
     width: 150px;
     font-weight: 500;
 }
+
+.req-field {
+    min-width: 200px;
+    background-color: lightgray;
+    height: 36px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding-left: 10px;
+}
+
+.req-title-label {
+    text-transform: uppercase;
+}
+
+.req-label {
+    margin-bottom: 0px !important;
+    font-weight: normal;
+}

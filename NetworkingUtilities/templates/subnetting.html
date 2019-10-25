@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='resources/img/icono_opt.jpg') }}">
+
+    <title>Networking Utilities</title>
+
+    <link href="{{ url_for('static', filename='resources/font-awesome/css/all.css') }}" rel="stylesheet"> <!--load all styles -->
+    <link href="{{ url_for('static', filename='css/bulma.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/app.css') }}" rel="stylesheet">
+
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/p5.js') }}"></script>
+</head>
+<style>
+    #diagram-menu {
+        width: 400px;
+        height: 100%;
+        position: absolute;
+        display: flex;
+        align-items: center;
+        transform: translateX(-350px);
+        transition: all 0.5s;
+    }
+    #diagram-options {
+        width: 350px;
+        background-color: #363636;
+        height: 100%;
+    }
+    #diagram-show-menu {
+        width: 50px;
+        background-color: #363636;
+        height: 50px;
+        border-radius: 0px 50px 50px 0px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        opacity: 0;
+        transition: all 0.2s;
+    }
+    #diagram-show-menu:hover {
+        opacity: 1;
+    }
+    #diagram-show-menu i {
+        transition: all 0.2s;
+    }
+    .device-container {
+        width: 100%;
+        background-color: white;
+        border-radius: 5px;
+        padding: 10px;
+        display: flex;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+    .device-icon {
+        height: 40px;
+    }
+    #diagram-properties {
+        width: 150px;
+        height: 50px;
+        background-color: #363636;
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .mouse-container {
+        width: 50px;
+        color: gray;
+        font-size: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+</style>
+<body>
+    <nav class="navbar" role="navigation" aria-label="main navigation" style="background-color: #2F2441">
+        <div class="navbar-brand">
+            <a class="navbar-item" href="/">
+                <img style="width: auto; max-height: 2.75rem;" 
+                    src="{{ url_for('static', filename='resources/img/icono_opt.jpg') }}" alt="Logo" 
+                    width="112" height="28">
+            </a>
+            <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </a>
+            <div id="navbarBasicExample" class="navbar-menu">
+                <div class="navbar-start">
+                    <a href="/" class="navbar-item" style="font-size: 1.3rem; text-transform: uppercase;
+                        font-weight: 500; padding-left: 0px; color: white;">
+                        Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <section id="mainSection" class="hero">
+        <div class="hero-body">
+            <div class="container">
+                <h1 class="title">
+                    Subnetting
+                </h1>
+                <h2 class="subtitle">
+                    Get the subnets table from a given network topology.
+                </h2>
+                <div class="field is-grouped">
+                    <div class="field" style="margin-right: 25px;">
+                        <label class="label">IPv4 Address</label>
+                        <div class="control">
+                            <input id="ip-input" class="input" type="text" placeholder="192.168.0.1" value="{{ ip }}">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="label">Subnet mask / Network size</label>
+                        <div class="control">
+                            <input id="subnet-input" class="input" type="text" placeholder="255.255.255.0 or /24" value="{{ mac }}">
+                        </div>
+                    </div>
+                </div>
+                <a id="openDiagram-btn" class="button is-link">Open diagram</a>
+                <a id="subnet-btn" class="button is-dark">Subnet!</a>
+            </div>
+        </div>
+    </section>
+    <section class="hero is-light">
+        <div class="hero-body">
+            <div class="container">
+                <h1 class="title">Requirements</h1>
+                <label class="label req-title-label">Network</label>
+                <div class="field is-grouped" style="margin-bottom: 0px;">
+                    <div class="field" style="margin-right: 25px;">
+                        <label class="label req-label">Address</label>
+                        <p class="req-field"></p>
+                    </div>
+                    <div class="field">
+                        <label class="label req-label">Class</label>
+                        <p class="req-field"></p>
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label req-label">Total # subnets</label>
+                    <p class="req-field" style="width: 200px;"></p>
+                </div>
+                <table class="table is-bordered" style="margin-top: 30px;">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>SubNetID</th>
+                            <th>Range</th>
+                            <th>BroadCast</th>
+                        </tr>
+                    </thead>
+                    <tbody id="subnetTable">
+                        <tr>
+                            <th>0</th>
+                            <td>172.16.0.0/18</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+    <div id="diagram-div" class="modal is-active">
+        <div class="modal-background"></div>
+        <div class="modal-content" style="width: max-content;">
+            <div id="diagram-menu">
+                <div id="diagram-options">
+                    <section class="hero is-dark">
+                        <div class="hero-body">
+                            <h1 class="title">
+                                Options
+                            </h1>
+                            <h2 class="subtitle">
+                                ¿What do you want to insert?
+                            </h2>
+                            <h2 class="subtitle" style="margin-bottom: 10px;">
+                                Intermediary Devices
+                            </h2>
+                            <div id="intermediary-container" class="device-container"></div>
+                        </div>
+                    </section>
+                </div>
+                <div id="diagram-show-menu">
+                    <i class="fas fa-chevron-right" style="color: white;
+                        font-size: 25px;"></i>
+                </div>
+            </div>
+            <div id="diagram-container" style="width: 1280px; height: 600px;"></div>
+            <div id="diagram-properties">
+                <div class="mouse-container" id="c-pointer" style="color: white"><i class="fas fa-mouse-pointer"></i></div>
+                <div class="mouse-container" id="c-plus"><i class="fas fa-plus"></i></div>
+                <div class="mouse-container" id="c-eraser"><i class="fas fa-eraser"></i></div>
+            </div>
+        </div>
+        <button class="modal-close is-large" aria-label="close"></button>
+    </div>
+</body>
+<script>
+
+var diagramDiv = $("#diagram-div");
+var cPointer = $("#c-pointer");
+var cPlus = $("#c-plus");
+var cEraser = $("#c-eraser");
+var menuActive = false;
+var cursorType = "default";
+
+$("#openDiagram-btn").click(function () {
+    var ip = $("#ip-input").val();
+    var subnet = $("#subnet-input").val();
+    diagramDiv.addClass("is-active");
+    $("html").addClass("is-clipped");
+});
+
+$(".modal-close").click(function () {
+    $(this).parent().removeClass("is-active");
+    $("html").removeClass("is-clipped");
+});
+
+$(".mouse-container").click(function () {
+    var id = $(this).attr("id");
+    cPointer.css("color", "gray");
+    cPlus.css("color", "gray");
+    cEraser.css("color", "gray");
+    if (id == "c-pointer") {
+        cPointer.css("color", "white");
+        cursorType = "default";
+    }
+    if (id == "c-plus") {
+        cPlus.css("color", "white");
+        cursorType = "plus";
+    }
+    if (id == "c-eraser") {
+        cEraser.css("color", "white");
+        cursorType = "erase";
+    }
+});
+
+$("#diagram-show-menu").click(function () {
+    if ($("#diagram-menu").css("transform") == "matrix(1, 0, 0, 1, -350, 0)") {
+        $("#diagram-menu").css("transform", "translateX(0px)");
+        $("#diagram-show-menu i").css("transform", "rotate(180deg)");
+        menuActive = true;
+    } else {
+        $("#diagram-menu").css("transform", "translateX(-350px)");
+        $("#diagram-show-menu i").css("transform", "rotate(0deg)");
+        setTimeout(function(){ menuActive = false; }, 500);
+    }
+});
+
+var maxTamCanvas = [ 1280, 600 ];
+var deviceIcons = {};
+
+class Device {
+    constructor(name, type, image, position, fixedPosition, size) {
+        this.name = name;
+        this.type = type;
+        this.image = image;
+        this.position = position;
+        this.fixedPosition = fixedPosition;
+        this.size = size;
+        this.interfaces = {};
+    }
+
+    clicked() {
+        
+    }
+}
+
+var devices = [];
+
+function setup() {
+    var myCanvas = createCanvas(maxTamCanvas[0], maxTamCanvas[1]);
+    myCanvas.parent("diagram-container");
+    angleMode(DEGREES);
+    loadDeviceIcons();
+}
+
+function draw() {
+    clear();
+    background(255);
+    drawDevices();
+    setCursor();
+}
+
+function setCursor() {
+    if (cursorType == "default") cursor('default');
+    if (cursorType == "plus") cursor('crosshair');
+    if (cursorType == "erase") cursor('not-allowed');
+}
+
+function loadDeviceIcons() {
+    deviceIcons['router'] = loadImage("{{ url_for('static', filename='resources/img/router.png') }}");
+    $("#intermediary-container").append(`
+        <img class="device-icon" src="{{ url_for('static', filename='resources/img/router.png') }}">
+    `);
+}
+
+function drawDevices() {
+    devices.forEach(device => {
+        image(device.image, device.fixedPosition[0], device.fixedPosition[1], 
+            device.size[0], device.size[1]);
+        push();
+        fill(64);
+        textSize(20);
+        textAlign(CENTER, CENTER);
+        text(device.name, device.position[0], device.position[1] + device.size[1]);
+        pop();
+    });
+}
+
+function mouseClicked() {
+    if (menuActive) {
+        if (mouseX > 400) {
+            if (cursorType == "plus")
+                devices.push(new Device("R" + (devices.length-1), "router", deviceIcons['router'], 
+                    [mouseX, mouseY], [mouseX-33, mouseY-24], [66, 48]));
+            else {
+                devices.forEach(device => {
+                    device.clicked();
+                });
+            }
+        }
+    } else {
+        if (mouseX > 50) {
+            if (cursorType == "plus")
+                devices.push(new Device("R" + (devices.length-1), "router", deviceIcons['router'], 
+                    [mouseX, mouseY], [mouseX-33, mouseY-24], [66, 48]));
+            else {
+                devices.forEach(device => {
+                    device.clicked();
+                });
+            }
+        }
+    }
+}
+
+</script>
+</html>

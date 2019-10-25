@@ -30,7 +30,8 @@ def scan(ip):
     clients_list = []
     for element in answered_list:
         fixedMAC = '-'.join(element[1].hwsrc.split(':')[0:3]).upper()
-        client_dict = {'ip': element[1].psrc, 'mac': element[1].hwsrc, 'enterprise': get_organization(fixedMAC)[1]}
+        org = get_organization(fixedMAC)
+        client_dict = {'ip': element[1].psrc, 'mac': element[1].hwsrc, 'enterprise': org[1] if org else ''}
         clients_list.append(client_dict)
     return clients_list
 
@@ -42,5 +43,5 @@ def print_result(results_list):
 
 ipFormat = '{}.1/24'.format('.'.join(get_ip().split('.')[0:3]))
 
-scan_result = scan(ipFormat)
+scan_result = scan('172.16.24.0/21')
 print_result(scan_result)
