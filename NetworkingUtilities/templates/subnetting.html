@@ -192,6 +192,18 @@
                             <div id="intermediary-container" class="device-container">
                                 <img class="device-icon" id="router" src="{{ url_for('static', filename='resources/img/router.png') }}">
                             </div>
+                            <h2 class="subtitle" style="margin-bottom: 10px; margin-top: 25px;">
+                                End Devices
+                            </h2>
+                            <div id="intermediary-container" class="device-container">
+                                <img class="device-icon" id="router2" src="{{ url_for('static', filename='resources/img/router.png') }}">
+                            </div>
+                            <h2 class="subtitle" style="margin-bottom: 10px; margin-top: 25px;">
+                                Media Types
+                            </h2>
+                            <div id="intermediary-container" class="device-container">
+                                <img class="device-icon" id="serial" src="{{ url_for('static', filename='resources/img/serial.png') }}">
+                            </div>
                         </div>
                     </section>
                 </div>
@@ -277,30 +289,97 @@ $("#diagram-show-menu").click(function () {
 var maxTamCanvas = [ 1280, 600 ];
 var deviceIcons = {};
 
+class Router {
+    constructor(name) {
+        this.name = name;
+        this.interfaces = {
+            'g0/0': null,
+            'g0/1': null,
+            's0/0': null,
+            's0/1': null,
+            's1/0': null,
+            's1/1': null,
+        }
+    }
+
+    getNextFreeInterface(type) {
+        var available = null;
+        const keys = Object.keys(this.interfaces);
+        for (const key of keys) {
+            if (!this.interfaces[key] && key.startsWith(type)) {
+                available = key;
+                break;
+            }
+        }
+        return available;
+    }
+}
+
+class Interface {
+    constructor(origin, originInterface) {
+        this.origin = origin;
+        this.originInterface = originInterface;
+        this.destination = null;
+        this.destinationInterface = null;
+    }
+}
+
 class Device {
     constructor(name, type, image, position, fixedPosition, size) {
         this.name = name;
+        this.device = null;
         this.type = type;
         this.image = image;
         this.position = position;
         this.fixedPosition = fixedPosition;
         this.size = size;
-        this.interfaces = {};
+        if (type == "router") {
+            this.device = new Router(name);
+        }
     }
 
     clicked() {
         if (mouseX >= this.fixedPosition[0] && mouseX <= this.fixedPosition[0] + this.size[0] &&
             mouseY >= this.fixedPosition[1] && mouseY <= this.fixedPosition[1] + this.size[1])
             if (cursorType == "erase") {
+                var interfaces = this.device.interfaces;
+                Object.keys(interfaces).forEach((key) => {
+                    if (interfaces[key]) {
+                        var int = interfaces[key];
+                        int.origin.device.interfaces[int.originInterface] = null;
+                        int.destination.device.interfaces[int.destinationInterface] = null;
+                    }
+                });
                 var index = devices.indexOf(this);
                 if (index > -1) {
                     devices.splice(index, 1);
+                }
+            }
+            else if (cursorType == "plus") {
+                if (deviceSelected == "serial") {
+                    var freeInterface = this.device.getNextFreeInterface("s");
+                    if (freeInterface) {
+                        if (addedFirstInterface) {
+                            addedFirstInterface[0].device.interfaces[addedFirstInterface[1]].destination = this;
+                            addedFirstInterface[0].device.interfaces[addedFirstInterface[1]].destinationInterface = freeInterface;
+                            this.device.interfaces[freeInterface] = addedFirstInterface[0].device.interfaces[addedFirstInterface[1]];
+                            addedFirstInterface = null;
+                        } else {
+                            if (this.device) {
+                                this.device.interfaces[freeInterface] = new Interface(this, freeInterface);
+                                addedFirstInterface = [ this, freeInterface ];
+                            }
+                        }
+                    } else {
+                        alert("There are no available interfaces in " + this.name);
+                    }
                 }
             }
     }
 }
 
 var devices = [];
+var addedFirstInterface = null;
 
 function setup() {
     var myCanvas = createCanvas(maxTamCanvas[0], maxTamCanvas[1]);
@@ -312,6 +391,7 @@ function setup() {
 function draw() {
     clear();
     background(255);
+    drawTempLines();
     drawDevices();
     setCursor();
 }
@@ -327,45 +407,77 @@ function loadDeviceIcons() {
 }
 
 function drawDevices() {
-    devices.forEach(device => {
+    push();
+    devices.forEach(device => {  
+        if (device.device) {
+            Object.keys(device.device.interfaces).forEach((key) => {
+                if (device.device.interfaces[key] && 
+                    device.device.interfaces[key].origin && device.device.interfaces[key].destination) {
+                    stroke(255,0,0);
+                    strokeWeight(5);
+                    line(
+                        device.device.interfaces[key].origin.position[0], 
+                        device.device.interfaces[key].origin.position[1], 
+                        device.device.interfaces[key].destination.position[0], 
+                        device.device.interfaces[key].destination.position[1]
+                    );
+                }
+            });
+        }
+    });
+    pop();
+    push();
+    devices.forEach(device => {  
         image(device.image, device.fixedPosition[0], device.fixedPosition[1], 
             device.size[0], device.size[1]);
-        push();
         fill(64);
         textSize(20);
         textAlign(CENTER, CENTER);
         text(device.name, device.position[0], device.position[1] + device.size[1]);
-        pop();
+        
     });
+    pop();
+}
+
+function drawTempLines() {
+    if (addedFirstInterface) {
+        push();
+        stroke(255,0,0);
+        strokeWeight(5);
+        line(addedFirstInterface[0].position[0], addedFirstInterface[0].position[1], mouseX, mouseY);
+        pop();
+    }
 }
 
 function mouseClicked() {
     if (menuActive) {
         if (mouseX > 400 && (mouseX < 1130 || mouseY < 550)) {
-            if (cursorType == "plus" && deviceSelected != "") {
-                var name = getNextName("R");
-                devices.push(new Device(name, "router", deviceIcons[deviceSelected], 
-                    [mouseX, mouseY], [mouseX-33, mouseY-24], [66, 48]));
-            }
-            else {
-                devices.forEach(device => {
-                    device.clicked();
-                });
-            }
+            clickEvent();
         }
     } else {
         if (mouseX > 50 && (mouseX < 1130 || mouseY < 550)) {
-            if (cursorType == "plus"  && deviceSelected != "") {
-                var name = getNextName("R");
-                devices.push(new Device(name, "router", deviceIcons[deviceSelected], 
-                    [mouseX, mouseY], [mouseX-33, mouseY-24], [66, 48]));
-            } 
-            else {
-                devices.forEach(device => {
-                    device.clicked();
-                });
-            }
+            clickEvent();
         }
+    }
+}
+
+function clickEvent() {
+    if (cursorType == "plus" && deviceSelected != "") {
+        if (deviceSelected == "router") {
+            var name = getNextName("R");
+            devices.push(new Device(name, "router", deviceIcons[deviceSelected], 
+                [mouseX, mouseY], [mouseX-33, mouseY-24], [66, 48]));
+        }
+        if (deviceSelected == "serial") {
+            devices.forEach(device => {
+                device.clicked();
+            });
+        }
+    }
+    else {
+        devices.forEach(device => {
+            device.clicked();
+        });
     }
 }
 

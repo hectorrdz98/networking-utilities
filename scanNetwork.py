@@ -25,6 +25,7 @@ def get_organization(mac):
     return c.fetchone()
 
 def scan(ip):
+    print(ip)
     answered_list = scapy.arping(ip, timeout=1,
                               verbose=False)[0]
     clients_list = []
