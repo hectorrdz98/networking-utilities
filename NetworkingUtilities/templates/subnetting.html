@@ -118,13 +118,13 @@
                     <div class="field" style="margin-right: 25px;">
                         <label class="label">IPv4 Address</label>
                         <div class="control">
-                            <input id="ip-input" class="input" type="text" placeholder="192.168.0.1" value="{{ ip }}">
+                            <input id="ip-input" class="input" type="text" placeholder="192.168.0.1" value="172.16.0.0">
                         </div>
                     </div>
                     <div class="field">
                         <label class="label">Subnet mask / Network size</label>
                         <div class="control">
-                            <input id="subnet-input" class="input" type="text" placeholder="255.255.255.0 or /24" value="{{ mac }}">
+                            <input id="subnet-input" class="input" type="text" placeholder="255.255.255.0 or /24" value="/26">
                         </div>
                     </div>
                 </div>
@@ -162,12 +162,7 @@
                         </tr>
                     </thead>
                     <tbody id="subnetTable">
-                        <tr>
-                            <th>0</th>
-                            <td>172.16.0.0/18</td>
-                            <td></td>
-                            <td></td>
-                        </tr>
+                        
                     </tbody>
                 </table>
             </div>
@@ -285,6 +280,214 @@ $("#diagram-show-menu").click(function () {
         setTimeout(function(){ menuActive = false; }, 500);
     }
 });
+
+var wanLinks = [];
+
+$("#subnet-btn").click(function () {
+    wanLinks = [];
+    devices.forEach(device => {  
+        if (device.device) {
+            Object.keys(device.device.interfaces).forEach((key) => {
+                if (device.device.interfaces[key] && 
+                    device.device.interfaces[key].origin && device.device.interfaces[key].destination) {
+                        if (!wanLinks.includes(device.device.interfaces[key])) 
+                            wanLinks.push(device.device.interfaces[key]);
+                    }
+            });
+        }
+    });
+    subnet();
+});
+
+function subnet() {
+    var subnets2Find = [];
+    wanLinks.forEach(wan => {
+        subnets2Find.push([2, wan]);
+    });
+    // Order the elements from highest to lowest
+    if (subnets2Find != []) {
+        var ip = $("#ip-input").val();
+        var subnet = $("#subnet-input").val();
+
+        var ipParts = ip.split(".");
+        var binaryIp = "";
+
+        for (var i = 0; i<ipParts.length; i++) {
+            binaryIp += getBinary(parseInt(ipParts[i]));
+            if (i < ipParts.length-1) binaryIp += ".";
+        }
+
+        var subnetData = getSubnet(subnet);
+        var subnetFormated = subnetData[0];
+        var binarySubnet = subnetData[1];
+
+        console.log(ip);
+        console.log(binaryIp);
+        console.log(subnetFormated);
+        console.log(binarySubnet);
+
+        subnets2Find.forEach(s => {
+            var hostBitsReq = getHostBits(s[0]);
+            var newNetSize = 32 - hostBitsReq;
+            var newSubnet = "/" + newNetSize;
+
+            var newSubnetData = getSubnet(newSubnet);
+            var newSubnetFormated = newSubnetData[0];
+            var newBinarySubnet = newSubnetData[1];
+
+            var allNewSubnets = getAllSubnets(binaryIp, binarySubnet, newBinarySubnet);
+
+            for (let i = 0; i < allNewSubnets.length; i++) {
+                const sub = allNewSubnets[i];
+                var result = `
+                    <tr>
+                        <th>`+i+`</th>
+                        <td>`+getDec(sub)+`</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                `;
+                $("#subnetTable").append(result);   
+            }
+
+            console.log(s[1].origin.name + ": " + s[0] + " -> " + hostBitsReq + "  hosts");
+            console.log(newSubnet);
+            console.log(newSubnetFormated);
+            console.log(newBinarySubnet);
+            //console.log(allNewSubnets);
+        });
+    }
+}
+
+function getHostBits(size) {
+    var i = 2;
+    var cont = 1;
+    while (i-2 < size) {
+        i *= 2;
+        cont++;
+    }
+    return cont;
+}
+
+function getAllSubnets(originalAddr, bSub, bNSub) {
+    var parts = ["", ""];
+    var partsOriginal = ["", ""];
+    var changePart = "";
+    var flag = false;
+    var adding = false;
+    for (let i = 0; i<bSub.length; i++) {
+        if (bSub[i] != bNSub[i]) {
+            changePart += bSub[i];
+            flag = true;
+            adding = true;
+        } else {
+            if (bSub[i] != ".") {
+                if (flag) {
+                    parts[1] += bSub[i];
+                    partsOriginal[1] += originalAddr[i];
+                }
+                else {
+                    parts[0] += bSub[i];
+                    partsOriginal[0] += originalAddr[i];
+                }
+                adding = false;
+            } else if (adding) {
+                changePart += bSub[i];
+            }
+        }
+    }
+
+    console.log(parts);
+    console.log(partsOriginal);
+    console.log(changePart);
+    
+    var subs = [];
+
+    var bitsToChange = changePart.split(".");
+
+    subsPreFormatted = [];
+    getNextSubnet(0, bitsToChange, "");
+    //console.log(preSubs);
+
+    subsPreFormatted.forEach(preSub => {
+        var almostIP = partsOriginal[0] + preSub + partsOriginal[1];
+        console.log(almostIP);
+        subs.push(getIP(almostIP));
+    });
+
+    return subs;
+}
+
+var subsPreFormatted = [];
+
+function getNextSubnet(index, arr, fullPart) {
+    var vals = [ parseInt(arr[index], 2), parseInt(arr[index].replace(/0/g, '1'), 2) ];
+    //console.log("vals: ");
+    //console.log(vals);
+    for (let i = vals[0]; i <= vals[1]; i++) {
+        var actPart = getBinary(i, arr[index].length);
+        var tempSize = fullPart + actPart;
+        //console.log("i: " + i + ", arr[index]: " + arr[index] + ", actPart: " + actPart);
+        if (index + 1 < arr.length) {
+            getNextSubnet(index + 1, arr, tempSize);
+            //console.log("Exit recursivity");
+        } else {
+            //console.log("final: " + tempSize);
+            subsPreFormatted.push(tempSize);
+        }
+    }
+}
+
+function getDec(binary) {
+    var dec = "";
+    var cont = 0;
+    binary.split(".").forEach(bin => {
+        dec += parseInt(bin, 2);
+        cont++;
+        if (cont < 4) dec += ".";
+    });
+    return dec;
+}
+
+function getBinary(n, tam=8) {
+    var preN = n.toString(2);
+    var res = "";
+    for (var i = 0; i < tam-preN.length; i++) res += "0";
+    res += preN;
+    return res;
+}
+
+function getIP(string) {
+    var chuncks = string.match(/.{1,8}/g);
+    return chuncks.join(".");
+}
+
+function getSubnet(subnetStr) {
+    var preSub = parseInt(subnetStr.slice(1, subnetStr.length));
+
+    var subnet = "";
+    var cont = 0;
+
+    for (var i = 0; i<preSub; i++) {
+        subnet += "1";
+        cont++;
+        if (cont == 8 && i < 32-1) {
+            cont = 0;
+            subnet += ".";
+        }
+    }
+
+    for (var i = preSub; i<32; i++) {
+        subnet += "0";
+        cont++;
+        if (cont == 8 && i < 32-1) {
+            cont = 0;
+            subnet += ".";
+        }
+    }
+
+    return [getDec(subnet), subnet];
+}
 
 var maxTamCanvas = [ 1280, 600 ];
 var deviceIcons = {};
@@ -420,6 +623,13 @@ function drawDevices() {
                         device.device.interfaces[key].origin.position[1], 
                         device.device.interfaces[key].destination.position[0], 
                         device.device.interfaces[key].destination.position[1]
+                    );
+                    fill(255);
+                    textSize(12);
+                    textAlign(CENTER, CENTER);
+                    text(device.device.interfaces[key].originInterface + " - " + device.device.interfaces[key].destinationInterface, 
+                        (device.device.interfaces[key].origin.position[0] + device.device.interfaces[key].destination.position[0]) / 2,
+                        (device.device.interfaces[key].origin.position[1] + device.device.interfaces[key].destination.position[1]) / 2
                     );
                 }
             });

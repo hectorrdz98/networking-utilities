@@ -59,6 +59,7 @@ def scan(ip):
 def getAddresses(ip, mac):
     networkParts = getNetworkAddress(ip, mac)
     ipFormat = str(networkParts[0]) + '/' + str(networkParts[1])
+    print("Get all IP from:", ipFormat)
     scan_result = scan(ipFormat)
     return { 'network': networkParts[0], 'networkSize': networkParts[1], 'scan_result': scan_result }
 

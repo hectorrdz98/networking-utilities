@@ -26,7 +26,7 @@ def get_organization(mac):
 
 def scan(ip):
     print(ip)
-    answered_list = scapy.arping(ip, timeout=1,
+    answered_list = scapy.arping('192.168.43.0/24', timeout=1,
                               verbose=False)[0]
     clients_list = []
     for element in answered_list:
@@ -44,5 +44,5 @@ def print_result(results_list):
 
 ipFormat = '{}.1/24'.format('.'.join(get_ip().split('.')[0:3]))
 
-scan_result = scan('172.16.24.0/21')
+scan_result = scan(get_ip())
 print_result(scan_result)
