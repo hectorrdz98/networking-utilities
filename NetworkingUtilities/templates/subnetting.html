@@ -300,12 +300,16 @@ $("#subnet-btn").click(function () {
 });
 
 function subnet() {
-    var subnets2Find = [];
+    var subnets2Find = {};
     wanLinks.forEach(wan => {
-        subnets2Find.push([2, wan]);
+        if (2 in subnets2Find) {
+            subnets2Find.push(wan);
+        } else {
+            subnets2Find[2] = [wan];
+        }
     });
     // Order the elements from highest to lowest
-    if (subnets2Find != []) {
+    if (subnets2Find != {}) {
         var ip = $("#ip-input").val();
         var subnet = $("#subnet-input").val();
 
@@ -326,7 +330,9 @@ function subnet() {
         console.log(subnetFormated);
         console.log(binarySubnet);
 
-        subnets2Find.forEach(s => {
+        // After groupping
+
+        /*subnets2Find.forEach(s => {
             var hostBitsReq = getHostBits(s[0]);
             var newNetSize = 32 - hostBitsReq;
             var newSubnet = "/" + newNetSize;
@@ -355,7 +361,7 @@ function subnet() {
             console.log(newSubnetFormated);
             console.log(newBinarySubnet);
             //console.log(allNewSubnets);
-        });
+        });*/
     }
 }
 
